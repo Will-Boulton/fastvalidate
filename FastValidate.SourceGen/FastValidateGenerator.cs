@@ -1,8 +1,6 @@
-﻿using System.CodeDom;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using FastValidate.Attributes;
-using FastValidate.SourceGen.Validations.Numerics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -11,7 +9,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace FastValidate.SourceGen;
 
-//[Generator]
+[Generator]
 public class FastValidateGenerator : ISourceGenerator
 {
     public void Initialize(GeneratorInitializationContext context)
@@ -23,7 +21,7 @@ public class FastValidateGenerator : ISourceGenerator
     {
         if(context.SyntaxContextReceiver is not ValidateTypeReceiver rec)
             return;
-
+        int i = 0;
         foreach (var syntaxctx in rec.ReceivedTypeDeclarations)
         {
             var typeDef = (TypeDeclarationSyntax) syntaxctx.Node;
@@ -45,12 +43,12 @@ public class FastValidateGenerator : ISourceGenerator
                     ReportUnsupportedType(context, syntaxctx);
                     continue;
             }
-            
-            var symbol = syntaxctx.SemanticModel.GetSymbolInfo(syntaxctx.Node).Symbol as INamedTypeSymbol;
 
+            var symbol_ = syntaxctx.SemanticModel.GetDeclaredSymbol(syntaxctx.Node); 
+            var symbol = symbol_ as INamedTypeSymbol;
             if (symbol is null)
             {
-                ReportUnknownError(context, syntaxctx);
+                ReportUnknownError(context, syntaxctx,symbol_);
                 continue;
             }    
             
@@ -73,11 +71,13 @@ public class FastValidateGenerator : ISourceGenerator
             if (TypeDeclaredAsPartial(typeDef.Modifiers))
             {
                 generate = Generate.TypeMethods;
+                
             }
             else
             {
                 generate = Generate.ExtensionMethods;
             }
+            context.AddSource($"{i++}.g.cs","//");
         }
         
     }
@@ -206,7 +206,7 @@ public class FastValidateGenerator : ISourceGenerator
     {
         context.ReportDiagnostic(
             Diagnostic.Create(
-                Diagnostics.UnsupportedTypeDeclaration_Descriptor,
+                Diagnostics.NoEffect_Descriptor,
                 ctx.Node.GetLocation())
         );
     }
@@ -220,12 +220,13 @@ public class FastValidateGenerator : ISourceGenerator
         );
     }
     
-    private static void ReportUnknownError(GeneratorExecutionContext context, GeneratorSyntaxContext ctx)
+    private static void ReportUnknownError(GeneratorExecutionContext context, GeneratorSyntaxContext ctx, ISymbol symbol)
     {
         context.ReportDiagnostic(
             Diagnostic.Create(
                 Diagnostics.Unknown_Descriptor,
-                ctx.Node.GetLocation())
+                ctx.Node.GetLocation(),
+                symbol.Kind)
         );
     }
 
