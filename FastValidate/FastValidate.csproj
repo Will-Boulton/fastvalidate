@@ -1,10 +1,55 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <IsPackable>false</IsPackable>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <LangVersion>10</LangVersion>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageId>FastValidate</PackageId>
+        <Product>FastValidate</Product>
+        <Title>Fast Validate</Title>
+        <Description>Use attributes to generate validation logic for arbitrary c# types</Description>
+        <PackageVersion>$(FastValidateVersion)</PackageVersion>
+        <AssemblyVersion>$(FastValidateVersion)</AssemblyVersion>
+        <FileVersion>$(FastValidateVersion)</FileVersion>
+        <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <!-- in debug we want to include build output-->
+        <IncludeBuildOutput>true</IncludeBuildOutput>
+    </PropertyGroup>
+    
+    <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <ProjectReference Include="..\FastValidate.Attributes\FastValidate.Attributes.csproj" PrivateAssets="all">
+            <IncludeAssets>FastValidate.Attributes.dll</IncludeAssets>
+        </ProjectReference>
+    </ItemGroup>
+    
+    <ItemGroup Condition=" '$(Configuration)' == 'Release' ">
+        <PackageReference Include="FastValidate.Attributes" Version="'$(FastValidateVersion)'" PrivateAssets="all"/>
+    </ItemGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3" PrivateAssets="all">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" PrivateAssets="all" />
+        <PackageReference Include="System.CodeDom" Version="6.0.0" PrivateAssets="all" GeneratePathProperty="true" />
+    </ItemGroup>
+    
+    <ItemGroup>
+        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+        <None Include="$(PkgSystem_CodeDom)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    </ItemGroup>
+    
+    <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <None Include="$(OutputPath)\FastValidate.Attributes.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    </ItemGroup>
+    
+    <Target DependsOnTargets="ResolveReferences" Name="CopyProjectReferencesToPackage">
+        <ItemGroup>
+            <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths-&gt;WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
+        </ItemGroup>
+    </Target>
 </Project>

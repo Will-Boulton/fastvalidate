@@ -1,18 +1,18 @@
 using FastValidate.Attributes;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace FastValidate.SourceGen.Validations.Numerics;
+namespace FastValidate.Validations.Numerics;
 
 public class RangeValidation : IMemberValidation, INumericValidation
 {
-    internal RangeValidation(MemberDeclarationSyntax member, object value1, object value2)
+    internal RangeValidation(string memberName, object value1, object value2)
     {
-        Member = member;
+        MemberName = memberName;
         Value1 = value1;
         Value2 = value2;
     }
     public object Value1 { get; }
     public object Value2 { get; }
-    public MemberDeclarationSyntax Member { get; }
+    public string MemberName { get; }
     
 }

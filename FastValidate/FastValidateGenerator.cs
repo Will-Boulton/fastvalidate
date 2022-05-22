@@ -1,13 +1,16 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using FastValidate.Attributes;
+using FastValidate.Validations.Numerics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 // ReSharper disable ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
 // ReSharper disable ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
 
-namespace FastValidate.SourceGen;
+namespace FastValidate;
 
 [Generator]
 public class FastValidateGenerator : ISourceGenerator
@@ -19,8 +22,21 @@ public class FastValidateGenerator : ISourceGenerator
 
     public void Execute(GeneratorExecutionContext context)
     {
+        
         if(context.SyntaxContextReceiver is not ValidateTypeReceiver rec)
             return;
+
+        
+#if DEBUG
+        SpinWait.SpinUntil(() => Debugger.IsAttached);
+#endif
+        Dictionary<string, INamedTypeSymbol> _attributeLookup = new()
+        {
+            {typeof(GreaterThanAttribute).FullName,context.Compilation.GetTypeByMetadataName(typeof(GreaterThanAttribute).FullName)},
+            {typeof(LessThanAttribute).FullName,context.Compilation.GetTypeByMetadataName(typeof(LessThanAttribute).FullName)},
+            {typeof(BetweenAttribute).FullName,context.Compilation.GetTypeByMetadataName(typeof(BetweenAttribute).FullName)},
+        };
+
         int i = 0;
         foreach (var syntaxctx in rec.ReceivedTypeDeclarations)
         {
@@ -112,11 +128,7 @@ public class FastValidateGenerator : ISourceGenerator
                     // only validate fields and properties
                     continue;
             }
-
-            var typeIsSpecial = typeSymbol.SpecialType == SpecialType.None;
-                
-            
-            var validations = INumericValidationAttributes(ctx, member, typeSymbol);
+            var validations = INumericValidationAttributes(ctx, symbol);
             
             if(validations.Any())
                 numericValidations[symbol] = validations;
@@ -125,32 +137,66 @@ public class FastValidateGenerator : ISourceGenerator
         return numericValidations;
     }
 
-    private List<INumericValidation> INumericValidationAttributes(GeneratorSyntaxContext ctx, MemberDeclarationSyntax member, ITypeSymbol typeSymbol)
+    private List<INumericValidation> INumericValidationAttributes(GeneratorSyntaxContext ctx, ISymbol symbol)
     {
         List<INumericValidation> validations = new();
-        foreach (var attributeListSyntax in member.AttributeLists)
+        foreach (var attribute in symbol.GetAttributes())
         {
-            foreach (var attributeSyntax in attributeListSyntax.Attributes)
+            
+            var fullName = attribute.AttributeClass?.MetadataName;
+            
+            if (fullName == typeof(GreaterThanAttribute).Name)
             {
-                if (ModelExtensions.GetSymbolInfo(ctx.SemanticModel, attributeSyntax).Symbol is not IMethodSymbol attributeSymbol)
-                { continue; }
-                
-                var attributeContainingTypeSymbol = attributeSymbol.ContainingType;
-                var fullName = attributeContainingTypeSymbol.ToDisplayString();
-                
-                if (fullName == typeof(GreaterThanAttribute).FullName)
+                if (TryGetBoundCheck(symbol, attribute, out var bound))
                 {
+                    bound.IsGreaterThanCheck = true;
+                    validations.Add(bound);
                 }
-                if (fullName == typeof(LessThanAttribute).FullName)
+                // BoundValidation.GreaterThan(member,)
+            }
+            if (fullName == typeof(LessThanAttribute).Name)
+            {
+                if (TryGetBoundCheck(symbol, attribute, out var bound))
                 {
+                    bound.IsGreaterThanCheck = false;
+                    validations.Add(bound);
                 }
-                if (fullName == typeof(BetweenAttribute).FullName)
+                // BoundValidation.LessThan(member,);
+            }
+            if (fullName == typeof(BetweenAttribute).Name)
+            {
+                var p1 = attribute.ConstructorArguments[0];
+                var p1Type = p1.Type;
+                var p2 = attribute.ConstructorArguments[1];
+                var p2Type = p2.Type;
+
+                if (IsParamTypeOk(p1Type) && IsParamTypeOk(p2Type))
                 {
-             
+                    validations.Add(new RangeValidation(symbol.Name,p1.Value,p2.Value));
                 }
             }
+            
         }
         return validations;
+    }
+
+    private bool IsParamTypeOk(ITypeSymbol parameterType)
+    {
+        return parameterType.SpecialType is >= SpecialType.System_SByte and <= SpecialType.System_Double;
+    }
+
+    private bool TryGetBoundCheck(ISymbol symbol, AttributeData attribute, out BoundValidation boundValidation)
+    {
+        boundValidation = null;
+        var parameter = attribute.ConstructorArguments[0];
+        var parameterType = parameter.Type;
+
+        if (!IsParamTypeOk(parameterType))
+            return false;
+        
+        boundValidation = new BoundValidation(symbol.Name, parameter.Value);
+        return true;
+
     }
     
     private bool HasValidateAttribute(GeneratorSyntaxContext ctx, SyntaxList<AttributeListSyntax> attributeListsList)
@@ -173,28 +219,7 @@ public class FastValidateGenerator : ISourceGenerator
         }
         return false;
     }
-    
-    private bool CollectNumericValidations(GeneratorSyntaxContext ctx, SyntaxList<AttributeListSyntax> attributeListsList)
-    {
-        foreach (var attributeListSyntax in attributeListsList)
-        {
-            foreach (var attributeSyntax in attributeListSyntax.Attributes)
-            {
-                if (ModelExtensions.GetSymbolInfo(ctx.SemanticModel, attributeSyntax).Symbol is not IMethodSymbol attributeSymbol)
-                { continue; }
-                
-                var attributeContainingTypeSymbol = attributeSymbol.ContainingType;
-                var fullName = attributeContainingTypeSymbol.ToDisplayString();
-                
-                if (fullName == typeof(ValidateAttribute).FullName)
-                {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-    
+
     
     private enum Generate
     {
