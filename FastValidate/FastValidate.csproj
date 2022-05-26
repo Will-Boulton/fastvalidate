@@ -12,6 +12,7 @@
         <AssemblyVersion>$(FastValidateVersion)</AssemblyVersion>
         <FileVersion>$(FastValidateVersion)</FileVersion>
         <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -26,7 +27,12 @@
     </ItemGroup>
     
     <ItemGroup Condition=" '$(Configuration)' == 'Release' ">
-        <PackageReference Include="FastValidate.Attributes" Version="'$(FastValidateVersion)'" PrivateAssets="all"/>
+        <ProjectReference Include="..\FastValidate.Attributes\FastValidate.Attributes.csproj" PrivateAssets="all">
+            <ExcludeAssets>all</ExcludeAssets>
+        </ProjectReference>
+        <PackageReference Include="FastValidate.Attributes" Version="$(FastValidateVersion)" PrivateAssets="all" GeneratePathProperty="true">
+            <IncludeAssets>FastValidate.Attributes.dll</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
     
     <ItemGroup>
@@ -35,17 +41,16 @@
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" PrivateAssets="all" />
-        <PackageReference Include="System.CodeDom" Version="6.0.0" PrivateAssets="all" GeneratePathProperty="true" />
+
+        
     </ItemGroup>
     
     <ItemGroup>
         <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-        <None Include="$(PkgSystem_CodeDom)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-    </ItemGroup>
-    
-    <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
         <None Include="$(OutputPath)\FastValidate.Attributes.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+
     </ItemGroup>
+
     
     <Target DependsOnTargets="ResolveReferences" Name="CopyProjectReferencesToPackage">
         <ItemGroup>

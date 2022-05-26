@@ -1,5 +1,4 @@
 using FastValidate.Attributes;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace FastValidate.Validations.Numerics;
 
@@ -13,6 +12,9 @@ public class RangeValidation : IMemberValidation, INumericValidation
     }
     public object Value1 { get; }
     public object Value2 { get; }
+
+    public uint FuzzyOrdinal => 0;
     public string MemberName { get; }
-    
+    public string SourceString => $"({MemberName} is > {Value1} and < {Value2})";
+
 }

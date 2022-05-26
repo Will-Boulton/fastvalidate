@@ -1,6 +1,6 @@
 <Project>
     <PropertyGroup>
-        <FastValidateVersion>1.0.7</FastValidateVersion>
+        <FastValidateVersion>1.0.10</FastValidateVersion>
         <Authors>Will-Boulton</Authors>
     </PropertyGroup>
 </Project>

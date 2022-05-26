@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastValidate.Attributes", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastValidate", "FastValidate\FastValidate.csproj", "{2780F8F4-85ED-46AC-A18A-E14D565D6C6C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastValidate.Test", "FastValidate.Test\FastValidate.Test.csproj", "{19AD7D4D-FEA8-400E-AECD-87194E72AB5A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{2780F8F4-85ED-46AC-A18A-E14D565D6C6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2780F8F4-85ED-46AC-A18A-E14D565D6C6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2780F8F4-85ED-46AC-A18A-E14D565D6C6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19AD7D4D-FEA8-400E-AECD-87194E72AB5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19AD7D4D-FEA8-400E-AECD-87194E72AB5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19AD7D4D-FEA8-400E-AECD-87194E72AB5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19AD7D4D-FEA8-400E-AECD-87194E72AB5A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
